@@ -11,7 +11,7 @@ df_stations = stations[["STAID", "STANAME"]]
 
 @app.route("/")
 def home():
-    return render_template("home.html", data=df_stations.to_html())
+    return render_template("home.html", data=df_stations.to_html(index=False))
 
 
 @app.route("/api/v1/<station>/<date>")
@@ -22,6 +22,24 @@ def temperature(station, date):
     return {"station": station,
             "date": date,
             "temperature": temp}
+
+
+@app.route("/api/v1/<station>")
+def data_station(station):
+    filename = f"data_small/TG_STAID{str(station).zfill(6)}.txt"
+    df = pd.read_csv(filename, skiprows=20,  parse_dates=["    DATE"])
+    result = df.to_dict(orient="records")
+    return result
+
+
+@app.route("/api/v1/yearly/<station>/<year>")
+def data_year(station, year):
+    filename = f"data_small/TG_STAID{str(station).zfill(6)}.txt"
+    df = pd.read_csv(filename, skiprows=20)
+    df["    DATE"] = df["    DATE"].astype(str)
+    result = df.loc[df["    DATE"].str.startswith(str(year))].to_dict(
+        orient="records")
+    return result
 
 
 if __name__ == "__main__":
